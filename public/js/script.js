@@ -3,51 +3,52 @@ const socket = io();
 // check if the browser supports geo location
 // and use watch position to tract the users location continously.
 
-if(navigator.geolocation){
-	navigator.geolocation.watchPosition(
-		(position)=>{
+if (navigator.geolocation) {
+    navigator.geolocation.watchPosition((position) => {
 		const {latitiude, longitude} = position.coords;
 		socket.emit("send-location", {latitude , longitude});
-}, (error)=>{
-	console.log(error);
-},
-
-// set options for high accuracy, 
-// a 5-second timeout, and no caching.
-{
-	enableHighAccuracy: true,
-	timeout:5000,
-	maximumAge: 0
-}
-);
-}
-else {
+    }, 
+    (error) => {
+        console.log(error);
+    },
+    {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0,
+    });
+} else {
     console.log("Geolocation is not supported by this browser.");
 }
 
-const map = L.map("map").setView([0,0],16);
+// Initialize the map
+const map = L.map("map").setView([0, 0], 16);
 
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
-	attribution:"OpenStreetMap"
-}).addTo(map)
+// Add a tile layer to the map
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "StreetMap-byVrindaSharma"
+}).addTo(map);
 
-const markers ={};
+// Store markers by user ID
+const markers = {};
 
-socket.on("receive-location", (data)=>{
-	const{id, latitude, longitude} = data;
-	map.setView([latitude,longitude]);
-	if(markers[id]){
-		markers[id].setLatLng([latitude,longitude]);
-	}
-	else{
-		markers[id] = L.marker([latitude,longitude]).addTo(map);
-	}
+// Listen for incoming location data from the server
+socket.on("receive-location", (data) => {
+    const { id, latitude, longitude } = data;
+    map.setView([latitude, longitude]);
+    if (markers[id]) {
+        // Update the marker's position
+        markers[id].setLatLng([latitude, longitude]);
+    } else {
+        // Create a new marker if it doesn't exist
+        markers[id] = L.marker([latitude, longitude]).addTo(map);
+             
+    }
 });
 
-// remove markers when users disconnect
-socket.on("user-disconnected", (id) =>{
-	if(markers[id]){
-		map.removeLayer(markers[id]);
-		delete markers[id];
-	}
+// Remove markers when a user disconnects
+socket.on("user-disconnected", (id) => {
+    if (markers[id]) {
+        map.removeLayer(markers[id]);
+        delete markers[id];
+    }
 });
