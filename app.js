@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+const path = require("path");
 
 const http = require("http");
 
@@ -10,10 +11,14 @@ const server = http.createServer(app);
 const io = socketio(server);
 
 app.set("view engine", "ejs");
-app.set(express.static(path.join(_dirname, "public")));
+app.set(express.static(path.join(__dirname, "public")));
+
+io.on("connection", function(socket){
+	console.log("we are connected to socket");
+})
 
 app.get("/", function (req, res){
-	res.send("starting");
+	res.render("index");
 });
 
 server.listen(3000);
